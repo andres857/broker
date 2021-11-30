@@ -1,0 +1,1 @@
+Los Volumenes data y plugins se copian una vez los contenedores estan iniciados, ya que nos los mapea si estan vacios

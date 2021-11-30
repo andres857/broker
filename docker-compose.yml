@@ -1,0 +1,62 @@
+version: "3.0"
+
+services:
+  emqx:
+      image: emqx/emqx:4.3.7
+      restart: always
+      depends_on:
+        - db
+      volumes:
+        - ./plugins:/opt/emqx/etc/plugins
+        - ./data:/opt/emqx/data
+        - ./certs/broker.windowschannel.com.key:/opt/emqx/etc/certs/emqx.key
+        - ./certs/broker.windowschannel.com.crt:/opt/emqx/etc/certs/emqx.crt
+        # - .broker/certs/brokerwc.windowschannel.com.ca:/opt/emqx/etc/certs/emqx.ca
+      environment:
+        - EMQX_NAME=windowschannel
+        - EMQX_HOST=broker.windowschannel.com
+        - EMQX_ALLOW_ANONYMOUS=false
+        - EMQX_LISTENER__SSL__EXTERNAL__KEYFILE=etc/certs/emqx.key
+        - EMQX_LISTENER__SSL__EXTERNAL__CERTFILE=etc/certs/emqx.crt
+        # - EMQX_LISTENER__SSL__EXTERNAL__CACERTFILE=etc/certs/emqx.ca
+        - EMQX_LISTENER__WSS__EXTERNAL__KEYFILE=etc/certs/emqx.key
+        - EMQX_LISTENER__WSS__EXTERNAL__CERTFILE=etc/certs/emqx.crt
+        # - EMQX_LISTENER__WSS__EXTERNAL__CACERTFILE=etc/certs/emqx.ca
+        - VIRTUAL_HOST=broker.windowschannel.com
+        - VIRTUAL_PORT=18083    
+        - EMQX_LOADED_PLUGINS=emqx_management,emqx_dashboard,emqx_auth_mysql
+        - LETSENCRYPT_HOST=broker.windowschannel.com
+        - LETSENCRYPT_EMAIL=info@windowschannel.com
+
+      ports:
+        - "1883:1883" # MQTT
+        - "8883:8883" # MQTT/SSL
+        - "8083:8083" # MQTT/WS
+        - "8084:8084" # MQTT/WSS
+        - "8081:8081" # api http
+        - "8082:8082" # api https
+        - "18083:18083" # Dashboard
+
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wchannel2020
+    volumes:  
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - 3306:3306
+
+  php-my-admin:
+    image: phpmyadmin
+    restart: always
+    ports:
+      - 8095:80
+    environment:
+      UPLOAD_LIMIT: 300M
+
+networks:
+  default:
+    external:
+      name: channels
